@@ -22,6 +22,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "pamproject"
+rootProject.name = "CanteenKu"
 include(":app")
  
