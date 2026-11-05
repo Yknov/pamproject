@@ -1,24 +1,20 @@
 # CanteenKu
 
 **Nama aplikasi (rencana):** CanteenKu  
-**Kategori:** Marketplace pemesanan makanan kantin multi-stand
+**Kategori:** Marketplace katalog menu & ulasan makanan kantin multi-stand
 
-CanteenKu adalah platform pra-pesan makanan dan minuman di area kantin kampus untuk membantu pengguna menghindari antrean panjang, terutama saat jam istirahat. Pengguna dapat melihat menu dari berbagai stand, memesan makanan untuk takeaway atau dine-in, memantau status pembuatan pesanan secara real-time, memberikan rating dan ulasan, serta mengelola saldo dompet digital kantin untuk pembayaran cashless.
+CanteenKu adalah platform informasi katalog makanan dan minuman di area kantin kampus untuk membantu pengguna menjelajahi menu dari berbagai stand serta melihat maupun membagikan rating dan ulasan makanan.
 
-Aplikasi dirancang untuk dua role, yaitu **user** dan **admin**. User menggunakan aplikasi untuk menjelajahi menu dan mengelola pesanan, sedangkan admin mengelola stand dan operasional menu sesuai hak aksesnya.
+Aplikasi dirancang untuk dua role, yaitu **user** dan **admin**. User menggunakan aplikasi untuk menjelajahi katalog menu dan memberikan ulasan, sedangkan admin mengelola katalog menu dan memantau ulasan melalui dashboard sesuai hak aksesnya.
 
 ## Kontribusi Anggota
 
-Tabel berikut mencatat pembagian fitur utama yang menjadi tanggung jawab masing-masing anggota. Fitur-fitur tersebut masih berupa kerangka dan akan diimplementasikan pada tahap pengerjaan berikutnya.
+Tabel berikut mencatat pembagian fitur utama yang menjadi tanggung jawab anggota.
 
 | No. | NIM | Nama Lengkap | Fitur Utama yang Ditangani |
 |---:|---|---|---|
 | 1 | 245150401111010 | Cantika Putri Permatasari | Modul Katalog Menu Makanan & Upload Gambar |
-| 2 | 245150401111004 | Farah Aliya Rochman | Modul Pemesanan & Status Antrean |
-| 3 | 245150407111012 | Achmad Hasbil Wafi Rahmawan | Modul Rating & Ulasan Makanan |
-| 4 | 245150400111010 | Dimas Naufal Danusela | Modul Menu Favorit & Langganan |
-| 5 | 245150400111038 | Farah Fadhilah Abhad | Modul Manajemen Stand Kantin |
-| 6 | 245150407111067 | Naufal Baruna Abhinaya | Modul Saldo & Top-Up Kantin (CanteenPay) |
+| 2 | 245150407111012 | Achmad Hasbil Wafi Rahmawan | Modul Rating & Ulasan Makanan |
 
 ## Spesifikasi Project
 
@@ -51,38 +47,26 @@ pamproject/
 │       │   ├── AndroidManifest.xml                # Deklarasi aplikasi dan Activity
 │       │   ├── java/yk/example/pamproject/
 │       │   │   ├── MainActivity.kt                # Activity utama; entry point UI Compose
-│       │   │   ├── navigation/                    # Route/NavHost aplikasi (kerangka kosong)
+│       │   │   ├── navigation/                    # Route/NavHost aplikasi
 │       │   │   ├── data/                          # Sumber data dan implementasi repository (kerangka)
 │       │   │   │   ├── remote/supabase/           # Lokasi integrasi Supabase mendatang
 │       │   │   │   ├── auth/                      # Data autentikasi
 │       │   │   │   ├── profile/                   # Data profil
 │       │   │   │   ├── catalog/                   # Data katalog/menu
-│       │   │   │   ├── ordering/                  # Data pesanan/antrean
-│       │   │   │   ├── reviews/                   # Data rating/ulasan
-│       │   │   │   ├── favorites/                 # Data favorit/langganan
-│       │   │   │   ├── canteen_management/        # Data manajemen stand
-│       │   │   │   └── canteen_pay/               # Data saldo/top-up
+│       │   │   │   └── reviews/                   # Data rating/ulasan
 │       │   │   ├── domain/                        # Model dan kontrak bisnis (kerangka)
 │       │   │   │   ├── auth/{model,repository,usecase}/
 │       │   │   │   ├── profile/{model,repository,usecase}/
 │       │   │   │   ├── catalog/{model,repository,usecase}/
-│       │   │   │   ├── ordering/{model,repository,usecase}/
-│       │   │   │   ├── reviews/{model,repository,usecase}/
-│       │   │   │   ├── favorites/{model,repository,usecase}/
-│       │   │   │   ├── canteen_management/{model,repository,usecase}/
-│       │   │   │   └── canteen_pay/{model,repository,usecase}/
+│       │   │   │   └── reviews/{model,repository,usecase}/
 │       │   │   └── ui/                            # Tampilan dikelompokkan per fitur
 │       │   │       ├── theme/                     # Warna, typography, dan tema Compose
-│       │   │       ├── components/                # Komponen UI lintas fitur (kerangka kosong)
-│       │   │       ├── auth/                       # Login dan register
-│       │   │       ├── profile/                    # Profil dan edit profil
-│       │   │       ├── home/{user,admin}/          # Beranda berdasarkan role (kerangka)
+│       │   │       ├── components/                # Komponen UI lintas fitur
+│       │   │       ├── auth/                      # Login dan register
+│       │   │       ├── profile/                   # Profil dan edit profil
+│       │   │       ├── home/{user,admin}/         # Beranda dan dashboard berdasarkan role
 │       │   │       ├── catalog/{list,detail,form,components}/
-│       │   │       ├── ordering/{list,detail,form,components}/
-│       │   │       ├── reviews/{list,detail,form,components}/
-│       │   │       ├── favorites/{list,components}/
-│       │   │       ├── canteen_management/{list,detail,form,components}/
-│       │   │       └── canteen_pay/{balance,top_up,components}/
+│       │   │       └── reviews/{list,detail,form,components}/
 │       │   └── res/                               # Resource Android
 │       │       ├── drawable/                      # Gambar statis dan drawable
 │       │       ├── mipmap-*/                      # Ikon launcher berbagai ukuran
@@ -97,7 +81,7 @@ pamproject/
 └── settings.gradle.kts                            # Daftar module project
 ```
 
-Folder `data`, `domain`, `navigation`, dan fitur UI yang belum dikerjakan hanya berisi `.gitkeep`. Saat logic mulai dibuat, repository implementation berada di `data`, kontrak repository/model berada di `domain`, sedangkan ViewModel dan state UI diletakkan dekat tampilan fitur terkait. Folder fitur bisnis selain auth dan profile adalah kerangka pembagian kerja; jumlah fitur utama yang dikembangkan harus sama dengan jumlah anggota kelompok.
+Folder `data`, `domain`, dan subfolder yang belum memiliki file berisi `.gitkeep`. Saat logic mulai dibuat, repository implementation berada di `data`, kontrak repository/model berada di `domain`, sedangkan ViewModel dan state UI diletakkan dekat tampilan fitur terkait.
 
 ## Asset
 
