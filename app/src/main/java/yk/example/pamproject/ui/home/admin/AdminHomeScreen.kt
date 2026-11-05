@@ -1,80 +1,46 @@
 package yk.example.pamproject.ui.home.admin
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import yk.example.pamproject.navigation.AppDestination
+import yk.example.pamproject.ui.components.ActionRow
+import yk.example.pamproject.ui.components.CanteenNavItem
+import yk.example.pamproject.ui.components.CanteenScaffold
+import yk.example.pamproject.ui.components.InfoPanel
+import yk.example.pamproject.ui.components.PageIntro
+import yk.example.pamproject.ui.components.PrimaryAction
+import yk.example.pamproject.ui.components.SectionHeading
 
 @Composable
-fun AdminHomeScreen(name: String, onProfile: () -> Unit, onLogout: () -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 18.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+fun AdminHomeScreen(name: String, navItems: List<CanteenNavItem>, onNavigate: (AppDestination) -> Unit) {
+    CanteenScaffold(
+        title = "Dashboard",
+        navItems = navItems,
+        selectedDestination = AppDestination.AdminHome,
+        onNavigate = onNavigate,
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(padding),
+            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 18.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Column {
-                Text("CanteenKu · Admin", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                Text("Halo, $name", style = MaterialTheme.typography.bodyMedium)
-            }
-            TextButton(onClick = onProfile) { Text("Profil") }
+            item { PageIntro("Halo, ${name.substringBefore('@')}", "Ringkasan operasional kantin.") }
+            item { SectionHeading("Pesanan masuk") }
+            item { InfoPanel("Antrean siap dikelola", "Pesanan baru dan status pembuatan akan muncul pada halaman antrean.") }
+            item { PrimaryAction("Buka antrean pesanan", { onNavigate(AppDestination.Orders) }) }
+            item { SectionHeading("Kelola kantin") }
+            item { ActionRow("Menu makanan", "Atur katalog dan ketersediaan menu", onClick = { onNavigate(AppDestination.Catalog) }) }
+            item { ActionRow("Stand kantin", "Profil, kategori, dan jam operasional", onClick = { onNavigate(AppDestination.Stands) }) }
+            item { ActionRow("Ulasan menu", "Lihat rating dari halaman detail menu", onClick = { onNavigate(AppDestination.Catalog) }) }
+            item { Text("Angka operasional akan tampil setelah data terhubung.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
-
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Operasional kantin", style = MaterialTheme.typography.headlineMedium)
-            Text("Kelola stand, menu, dan pesanan dari satu tempat.", style = MaterialTheme.typography.bodyLarge)
-        }
-
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("Pesanan masuk", style = MaterialTheme.typography.titleLarge)
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                shape = MaterialTheme.shapes.medium,
-            ) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                    Text("Antrean pesanan", style = MaterialTheme.typography.titleMedium)
-                    Text("Pesanan baru akan tampil di bagian ini.", style = MaterialTheme.typography.bodyMedium)
-                }
-            }
-            Button(onClick = {}, modifier = Modifier.fillMaxWidth().height(50.dp)) { Text("Buka antrean") }
-        }
-
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Kelola kantin", style = MaterialTheme.typography.titleLarge)
-            AdminDestination("Stand kantin", "Informasi dan profil stand")
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            AdminDestination("Menu makanan", "Daftar menu dan ketersediaan")
-        }
-        Spacer(Modifier.height(4.dp))
-        OutlinedButton(onClick = onLogout, modifier = Modifier.fillMaxWidth().height(48.dp)) { Text("Keluar") }
-    }
-}
-
-@Composable
-private fun AdminDestination(title: String, description: String) {
-    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-        Text(title, style = MaterialTheme.typography.titleMedium)
-        Text(description, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

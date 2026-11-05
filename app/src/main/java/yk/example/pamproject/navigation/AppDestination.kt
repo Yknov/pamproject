@@ -1,0 +1,26 @@
+package yk.example.pamproject.navigation
+
+enum class AppDestination {
+    Login,
+    Register,
+    UserHome,
+    AdminHome,
+    Profile,
+    EditProfile,
+    Catalog,
+    CatalogDetail,
+    CatalogForm,
+    Orders,
+    OrderDetail,
+    OrderForm,
+    Reviews,
+    ReviewDetail,
+    ReviewForm,
+    Favorites,
+    Subscriptions,
+    Wallet,
+    TopUp,
+    Stands,
+    StandDetail,
+    StandForm,
+}
