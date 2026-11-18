@@ -75,10 +75,6 @@ fun AdminHomeScreen(
             }
 
             item {
-                PrimaryAction("Kelola katalog menu", { onNavigate(AppDestination.Catalog) })
-            }
-
-            item {
                 SectionHeading("Kelola kantin")
             }
 
