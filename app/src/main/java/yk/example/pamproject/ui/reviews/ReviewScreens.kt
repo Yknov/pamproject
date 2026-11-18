@@ -17,10 +17,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -32,21 +28,13 @@ import yk.example.pamproject.ui.components.InfoPanel
 import yk.example.pamproject.ui.components.PageIntro
 import yk.example.pamproject.ui.components.PrimaryAction
 import yk.example.pamproject.ui.components.StatusLabel
-
-data class DemoReview(val dish: String, val author: String, val stars: Int, val comment: String)
-
-val demoReviews = listOf(
-    DemoReview("Nasi ayam sambal matah", "Pengguna CanteenKu", 5, "Sambalnya segar dan porsinya pas."),
-    DemoReview("Mie ayam jamur", "Mahasiswa", 4, "Rasanya enak, pelayanannya cukup cepat."),
-    DemoReview("Es teh kampus", "Mahasiswa", 5, "Manisnya pas dan segar saat cuaca panas."),
-)
-
-fun reviewsForMenu(menuName: String): List<DemoReview> =
-    if (menuName.isBlank()) demoReviews else demoReviews.filter { it.dish == menuName }
+import yk.example.pamproject.ui.reviews.detail.ReviewDetailUiState
+import yk.example.pamproject.ui.reviews.form.ReviewFormUiState
+import yk.example.pamproject.ui.reviews.list.ReviewListUiState
 
 @Composable
 fun ReviewListScreen(
-    menuName: String,
+    uiState: ReviewListUiState,
     navItems: List<CanteenNavItem>,
     selectedDestination: AppDestination?,
     onNavigate: (AppDestination) -> Unit,
@@ -54,7 +42,6 @@ fun ReviewListScreen(
     onOpenReview: (String) -> Unit,
     onWriteReview: () -> Unit,
 ) {
-    val displayedReviews = reviewsForMenu(menuName)
     CanteenScaffold(
         title = "Rating & ulasan",
         navItems = navItems,
@@ -63,22 +50,24 @@ fun ReviewListScreen(
         onBack = onBack,
     ) { padding ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
             contentPadding = PaddingValues(20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             item {
                 PageIntro(
                     title = "Ulasan menu",
-                    description = if (menuName.isBlank()) {
+                    description = if (uiState.menuName.isBlank()) {
                         "Semua ulasan makanan dan minuman di kantin kampus."
                     } else {
-                        "$menuName · contoh tampilan ulasan"
+                        "${uiState.menuName} · contoh tampilan ulasan"
                     },
                 )
             }
             item { PrimaryAction("Tulis ulasan", onWriteReview) }
-            items(displayedReviews) { review ->
+            items(uiState.reviews) { review ->
                 Surface(
                     onClick = { onOpenReview(review.dish) },
                     modifier = Modifier.fillMaxWidth(),
@@ -93,29 +82,71 @@ fun ReviewListScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Text(review.dish, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                            Text(
+                                review.dish,
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                            )
                             StatusLabel("★ ${review.stars}/5")
                         }
-                        Text(review.author, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            review.author,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                         Text(review.comment, style = MaterialTheme.typography.bodyMedium)
                     }
                 }
             }
-            if (displayedReviews.isEmpty()) {
-                item { InfoPanel("Belum ada ulasan", "Jadilah yang pertama berbagi pengalaman untuk menu ini.") }
+            if (uiState.errorMessage != null) {
+                item { InfoPanel("Gagal memuat ulasan", uiState.errorMessage) }
+            } else if (uiState.reviews.isEmpty() && !uiState.isLoading) {
+                item {
+                    InfoPanel(
+                        "Belum ada ulasan",
+                        "Jadilah yang pertama berbagi pengalaman untuk menu ini.",
+                    )
+                }
             }
-            item { InfoPanel("Bagikan pengalaman", "Ulasan membantu sivitas kampus menemukan menu terbaik di kantin.") }
+            item {
+                InfoPanel(
+                    "Bagikan pengalaman",
+                    "Ulasan membantu sivitas kampus menemukan menu terbaik di kantin.",
+                )
+            }
         }
     }
 }
 
 @Composable
-fun ReviewDetailScreen(dish: String, onBack: () -> Unit, onEdit: () -> Unit) {
-    val review = demoReviews.firstOrNull { it.dish == dish } ?: demoReviews.first()
+fun ReviewDetailScreen(
+    uiState: ReviewDetailUiState,
+    onBack: () -> Unit,
+    onEdit: () -> Unit,
+) {
+    val review = uiState.review
     CanteenScaffold("Detail ulasan", onBack = onBack) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            if (review == null) {
+                if (uiState.errorMessage != null) {
+                    InfoPanel("Gagal memuat ulasan", uiState.errorMessage)
+                } else {
+                    PageIntro("Memuat ulasan", "Mohon tunggu sebentar.")
+                }
+                return@Column
+            }
             PageIntro(review.dish, "Ulasan contoh dari ${review.author}.")
-            Text("★".repeat(review.stars), style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.tertiary)
+            Text(
+                "★".repeat(review.stars),
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.tertiary,
+            )
             Text(review.comment, style = MaterialTheme.typography.bodyLarge)
             InfoPanel("Tentang ulasan", "Ulasan membantu pengguna lain memilih menu kantin.")
             PrimaryAction("Edit ulasan", onEdit)
@@ -124,21 +155,47 @@ fun ReviewDetailScreen(dish: String, onBack: () -> Unit, onEdit: () -> Unit) {
 }
 
 @Composable
-fun ReviewFormScreen(dish: String, onBack: () -> Unit, onSave: () -> Unit) {
-    var rating by rememberSaveable { mutableStateOf(5) }
-    var comment by rememberSaveable { mutableStateOf("") }
+fun ReviewFormScreen(
+    uiState: ReviewFormUiState,
+    onRatingChange: (Int) -> Unit,
+    onCommentChange: (String) -> Unit,
+    onBack: () -> Unit,
+    onSave: () -> Unit,
+) {
     CanteenScaffold("Tulis ulasan", onBack = onBack) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            PageIntro("Bagaimana rasanya?", dish)
+        Column(
+            Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            PageIntro("Bagaimana rasanya?", uiState.dish)
             Text("Rating", style = MaterialTheme.typography.titleMedium)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 (1..5).forEach { value ->
-                    FilterChip(selected = rating == value, onClick = { rating = value }, label = { Text("★ $value") })
+                    FilterChip(
+                        selected = uiState.rating == value,
+                        onClick = { onRatingChange(value) },
+                        label = { Text("★ $value") },
+                    )
                 }
             }
-            OutlinedTextField(comment, { comment = it }, Modifier.fillMaxWidth(), label = { Text("Tulis ulasan") }, minLines = 4)
-            InfoPanel("Ulasan yang baik", "Jelaskan rasa, porsi, dan pengalaman menikmati menu dengan sopan.")
-            PrimaryAction("Kirim ulasan", onSave)
+            OutlinedTextField(
+                value = uiState.comment,
+                onValueChange = onCommentChange,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Tulis ulasan") },
+                minLines = 4,
+            )
+            if (uiState.errorMessage != null) {
+                InfoPanel("Gagal mengirim", uiState.errorMessage)
+            }
+            InfoPanel(
+                "Ulasan yang baik",
+                "Jelaskan rasa, porsi, dan pengalaman menikmati menu dengan sopan.",
+            )
+            PrimaryAction(if (uiState.isSubmitting) "Mengirim..." else "Kirim ulasan", onSave)
         }
     }
 }

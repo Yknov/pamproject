@@ -16,44 +16,53 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun RegisterScreen(onRegister: () -> Unit, onLogin: () -> Unit) {
-    var name by rememberSaveable { mutableStateOf("") }
-    var email by rememberSaveable { mutableStateOf("") }
-    var password by rememberSaveable { mutableStateOf("") }
-    var confirmPassword by rememberSaveable { mutableStateOf("") }
-    var passwordVisible by rememberSaveable { mutableStateOf(false) }
-    var confirmPasswordVisible by rememberSaveable { mutableStateOf(false) }
-
+fun RegisterScreen(
+    uiState: RegisterUiState,
+    onNameChange: (String) -> Unit,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onConfirmPasswordChange: (String) -> Unit,
+    onTogglePasswordVisibility: () -> Unit,
+    onToggleConfirmPasswordVisibility: () -> Unit,
+    onRegisterClick: () -> Unit,
+    onLoginClick: () -> Unit,
+) {
     Column(
-        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(28.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(28.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.Start,
     ) {
-        Text("Buat akun", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
+        Text(
+            text = "Buat akun",
+            style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.primary,
+        )
         Spacer(Modifier.height(8.dp))
-        Text("Daftar untuk mulai menggunakan CanteenKu.", style = MaterialTheme.typography.bodyLarge)
+        Text(
+            text = "Daftar untuk mulai menggunakan CanteenKu.",
+            style = MaterialTheme.typography.bodyLarge,
+        )
         Spacer(Modifier.height(26.dp))
         OutlinedTextField(
-            value = name,
-            onValueChange = { name = it },
+            value = uiState.name,
+            onValueChange = onNameChange,
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Nama lengkap") },
             singleLine = true,
         )
         Spacer(Modifier.height(14.dp))
         OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
+            value = uiState.email,
+            onValueChange = onEmailChange,
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Email") },
             singleLine = true,
@@ -61,24 +70,44 @@ fun RegisterScreen(onRegister: () -> Unit, onLogin: () -> Unit) {
         )
         Spacer(Modifier.height(14.dp))
         AuthPasswordField(
-            value = password,
-            onValueChange = { password = it },
+            value = uiState.password,
+            onValueChange = onPasswordChange,
             label = "Password",
-            visible = passwordVisible,
-            onToggleVisibility = { passwordVisible = !passwordVisible },
+            visible = uiState.isPasswordVisible,
+            onToggleVisibility = onTogglePasswordVisibility,
         )
         Spacer(Modifier.height(14.dp))
         AuthPasswordField(
-            value = confirmPassword,
-            onValueChange = { confirmPassword = it },
+            value = uiState.confirmPassword,
+            onValueChange = onConfirmPasswordChange,
             label = "Konfirmasi password",
-            visible = confirmPasswordVisible,
-            onToggleVisibility = { confirmPasswordVisible = !confirmPasswordVisible },
+            visible = uiState.isConfirmPasswordVisible,
+            onToggleVisibility = onToggleConfirmPasswordVisibility,
         )
+        if (uiState.errorMessage != null) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = uiState.errorMessage,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
         Spacer(Modifier.height(22.dp))
-        Button(onClick = onRegister, modifier = Modifier.fillMaxWidth().height(52.dp)) { Text("Daftar") }
-        TextButton(onClick = onLogin, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+        Button(
+            onClick = onRegisterClick,
+            enabled = uiState.canSubmit,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+        ) {
+            Text(if (uiState.isSubmitting) "Memproses..." else "Daftar")
+        }
+        TextButton(
+            onClick = onLoginClick,
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+        ) {
             Text("Sudah punya akun? Masuk")
         }
     }
 }
+

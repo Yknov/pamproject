@@ -18,8 +18,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import java.util.Locale
 import yk.example.pamproject.navigation.AppDestination
-import yk.example.pamproject.ui.catalog.demoMenus
 import yk.example.pamproject.ui.components.ActionRow
 import yk.example.pamproject.ui.components.CanteenNavItem
 import yk.example.pamproject.ui.components.CanteenScaffold
@@ -27,11 +27,10 @@ import yk.example.pamproject.ui.components.InfoPanel
 import yk.example.pamproject.ui.components.PageIntro
 import yk.example.pamproject.ui.components.PrimaryAction
 import yk.example.pamproject.ui.components.SectionHeading
-import yk.example.pamproject.ui.reviews.demoReviews
 
 @Composable
 fun UserHomeScreen(
-    name: String,
+    uiState: UserHomeUiState,
     navItems: List<CanteenNavItem>,
     onNavigate: (AppDestination) -> Unit,
     onOpenMenu: (String) -> Unit = { onNavigate(AppDestination.CatalogDetail) },
@@ -51,7 +50,7 @@ fun UserHomeScreen(
         ) {
             item {
                 PageIntro(
-                    title = "Halo, ${name.substringBefore('@')}",
+                    title = "Halo, ${uiState.displayName.ifBlank { "Pengguna" }}",
                     description = "Jelajahi katalog menu kantin kampus dan lihat ulasan mahasiswa.",
                 )
             }
@@ -62,13 +61,13 @@ fun UserHomeScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     HomeStatCard(
-                        title = "${demoMenus.size} Menu",
+                        title = "${uiState.menuCount} Menu",
                         subtitle = "Tersedia di katalog",
                         modifier = Modifier.weight(1f),
                     )
                     HomeStatCard(
-                        title = "★ 4.8 / 5",
-                        subtitle = "${demoReviews.size} ulasan mahasiswa",
+                        title = "★ ${String.format(Locale.US, "%.1f", uiState.averageRating)} / 5",
+                        subtitle = "${uiState.reviewCount} ulasan mahasiswa",
                         modifier = Modifier.weight(1f),
                     )
                 }
@@ -82,13 +81,17 @@ fun UserHomeScreen(
                 SectionHeading("Pilihan kantin", "Katalog", { onNavigate(AppDestination.Catalog) })
             }
 
-            items(demoMenus) { menu ->
+            items(uiState.menus) { menu ->
                 ActionRow(
                     title = menu.name,
                     subtitle = "${menu.stand} · ${menu.category}",
                     trailing = menu.price,
                     onClick = { onOpenMenu(menu.name) },
                 )
+            }
+
+            if (uiState.errorMessage != null) {
+                item { InfoPanel("Gagal memuat data", uiState.errorMessage) }
             }
 
             item {

@@ -18,7 +18,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import yk.example.pamproject.navigation.AppDestination
-import yk.example.pamproject.ui.catalog.demoMenus
 import yk.example.pamproject.ui.components.ActionRow
 import yk.example.pamproject.ui.components.CanteenNavItem
 import yk.example.pamproject.ui.components.CanteenScaffold
@@ -26,11 +25,10 @@ import yk.example.pamproject.ui.components.InfoPanel
 import yk.example.pamproject.ui.components.PageIntro
 import yk.example.pamproject.ui.components.PrimaryAction
 import yk.example.pamproject.ui.components.SectionHeading
-import yk.example.pamproject.ui.reviews.demoReviews
 
 @Composable
 fun AdminHomeScreen(
-    name: String,
+    uiState: AdminHomeUiState,
     navItems: List<CanteenNavItem>,
     onNavigate: (AppDestination) -> Unit,
 ) {
@@ -49,7 +47,7 @@ fun AdminHomeScreen(
         ) {
             item {
                 PageIntro(
-                    title = "Halo, ${name.substringBefore('@')}",
+                    title = "Halo, ${uiState.displayName.ifBlank { "Pengguna" }}",
                     description = "Ringkasan katalog menu dan ulasan kantin kampus.",
                 )
             }
@@ -60,16 +58,20 @@ fun AdminHomeScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     AdminSummaryCard(
-                        value = "${demoMenus.size} Menu",
+                        value = "${uiState.menuCount} Menu",
                         label = "Terdaftar di katalog",
                         modifier = Modifier.weight(1f),
                     )
                     AdminSummaryCard(
-                        value = "${demoReviews.size} Ulasan",
+                        value = "${uiState.reviewCount} Ulasan",
                         label = "Masukan pengguna",
                         modifier = Modifier.weight(1f),
                     )
                 }
+            }
+
+            if (uiState.errorMessage != null) {
+                item { InfoPanel("Gagal memuat data", uiState.errorMessage) }
             }
 
             item {

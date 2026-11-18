@@ -16,33 +16,42 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun LoginScreen(onLogin: (String) -> Unit, onRegister: () -> Unit) {
-    var email by rememberSaveable { mutableStateOf("") }
-    var password by rememberSaveable { mutableStateOf("") }
-    var passwordVisible by rememberSaveable { mutableStateOf(false) }
-
+fun LoginScreen(
+    uiState: LoginUiState,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onTogglePasswordVisibility: () -> Unit,
+    onLoginClick: () -> Unit,
+    onRegisterClick: () -> Unit,
+) {
     Column(
-        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = 28.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 24.dp, vertical = 28.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.Start,
     ) {
-        Text("CanteenKu", style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.primary)
+        Text(
+            text = "CanteenKu",
+            style = MaterialTheme.typography.headlineLarge,
+            color = MaterialTheme.colorScheme.primary,
+        )
         Spacer(Modifier.height(8.dp))
-        Text("Pesan makanan kampus tanpa antre.", style = MaterialTheme.typography.bodyLarge)
+        Text(
+            text = "Pesan makanan kampus tanpa antre.",
+            style = MaterialTheme.typography.bodyLarge,
+        )
         Spacer(Modifier.height(36.dp))
         OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
+            value = uiState.email,
+            onValueChange = onEmailChange,
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Email") },
             singleLine = true,
@@ -50,19 +59,36 @@ fun LoginScreen(onLogin: (String) -> Unit, onRegister: () -> Unit) {
         )
         Spacer(Modifier.height(14.dp))
         AuthPasswordField(
-            value = password,
-            onValueChange = { password = it },
+            value = uiState.password,
+            onValueChange = onPasswordChange,
             label = "Password",
-            visible = passwordVisible,
-            onToggleVisibility = { passwordVisible = !passwordVisible },
+            visible = uiState.isPasswordVisible,
+            onToggleVisibility = onTogglePasswordVisibility,
         )
         Spacer(Modifier.height(24.dp))
+        if (uiState.errorMessage != null) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = uiState.errorMessage,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
         Button(
-            onClick = { onLogin(email.trim()) },
-            modifier = Modifier.fillMaxWidth().height(52.dp),
-        ) { Text("Masuk") }
-        TextButton(onClick = onRegister, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+            onClick = onLoginClick,
+            enabled = uiState.canSubmit,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+        ) {
+            Text(if (uiState.isSubmitting) "Memproses..." else "Masuk")
+        }
+        TextButton(
+            onClick = onRegisterClick,
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+        ) {
             Text("Belum punya akun? Daftar")
         }
     }
 }
+

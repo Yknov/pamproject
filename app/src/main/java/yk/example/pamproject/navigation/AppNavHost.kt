@@ -1,39 +1,54 @@
 package yk.example.pamproject.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import yk.example.pamproject.ui.auth.LoginEffect
 import yk.example.pamproject.ui.auth.LoginScreen
+import yk.example.pamproject.ui.auth.LoginViewModel
+import yk.example.pamproject.ui.auth.RegisterEffect
 import yk.example.pamproject.ui.auth.RegisterScreen
+import yk.example.pamproject.ui.auth.RegisterViewModel
 import yk.example.pamproject.ui.catalog.CatalogDetailScreen
 import yk.example.pamproject.ui.catalog.CatalogFormScreen
 import yk.example.pamproject.ui.catalog.CatalogListScreen
+import yk.example.pamproject.ui.catalog.detail.CatalogDetailViewModel
+import yk.example.pamproject.ui.catalog.form.CatalogFormEffect
+import yk.example.pamproject.ui.catalog.form.CatalogFormViewModel
+import yk.example.pamproject.ui.catalog.list.CatalogListViewModel
 import yk.example.pamproject.ui.components.CanteenNavItem
 import yk.example.pamproject.ui.home.admin.AdminHomeScreen
+import yk.example.pamproject.ui.home.admin.AdminHomeViewModel
 import yk.example.pamproject.ui.home.user.UserHomeScreen
+import yk.example.pamproject.ui.home.user.UserHomeViewModel
+import yk.example.pamproject.ui.profile.EditProfileEffect
 import yk.example.pamproject.ui.profile.EditProfileScreen
+import yk.example.pamproject.ui.profile.EditProfileViewModel
 import yk.example.pamproject.ui.profile.ProfileScreen
+import yk.example.pamproject.ui.profile.ProfileViewModel
 import yk.example.pamproject.ui.reviews.ReviewDetailScreen
 import yk.example.pamproject.ui.reviews.ReviewFormScreen
 import yk.example.pamproject.ui.reviews.ReviewListScreen
+import yk.example.pamproject.ui.reviews.detail.ReviewDetailViewModel
+import yk.example.pamproject.ui.reviews.form.ReviewFormEffect
+import yk.example.pamproject.ui.reviews.form.ReviewFormViewModel
+import yk.example.pamproject.ui.reviews.list.ReviewListViewModel
+import yk.example.pamproject.ui.session.SessionViewModel
 
 @Composable
 fun AppNavHost(
     navController: NavHostController = rememberNavController(),
 ) {
-    var activeEmail by rememberSaveable { mutableStateOf("") }
-    var activeName by rememberSaveable { mutableStateOf("") }
-    var isAdmin by rememberSaveable { mutableStateOf(false) }
-    var selectedItem by rememberSaveable { mutableStateOf("") }
-    var editing by rememberSaveable { mutableStateOf(false) }
+    val sessionViewModel: SessionViewModel = viewModel()
+    val sessionState by sessionViewModel.uiState.collectAsStateWithLifecycle()
 
-    val homeDestination = if (isAdmin) AppDestination.AdminHome else AppDestination.UserHome
+    val homeDestination = sessionState.homeDestination
     val userNav = listOf(
         CanteenNavItem("Beranda", AppDestination.UserHome),
         CanteenNavItem("Menu", AppDestination.Catalog),
@@ -46,10 +61,10 @@ fun AppNavHost(
         CanteenNavItem("Ulasan", AppDestination.Reviews),
         CanteenNavItem("Profil", AppDestination.Profile),
     )
-    val navItems = if (isAdmin) adminNav else userNav
+    val navItems = if (sessionState.isAdmin) adminNav else userNav
     val navigate: (AppDestination) -> Unit = { target ->
         if (target == AppDestination.Reviews) {
-            selectedItem = ""
+            sessionViewModel.clearSelectedItem()
         }
         navController.navigate(target.name) {
             launchSingleTop = true
@@ -61,63 +76,121 @@ fun AppNavHost(
         startDestination = AppDestination.Login.name,
     ) {
         composable(AppDestination.Login.name) {
+            val viewModel: LoginViewModel = viewModel()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+            LaunchedEffect(viewModel) {
+                viewModel.effect.collect { effect ->
+                    when (effect) {
+                        is LoginEffect.NavigateToHome -> {
+                            sessionViewModel.onLoginSuccess(effect.session)
+                            val target = if (effect.session.isAdmin) {
+                                AppDestination.AdminHome
+                            } else {
+                                AppDestination.UserHome
+                            }
+                            navController.navigate(target.name) {
+                                popUpTo(AppDestination.Login.name) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        }
+
+                        LoginEffect.NavigateToRegister -> {
+                            navController.navigate(AppDestination.Register.name) {
+                                launchSingleTop = true
+                            }
+                        }
+                    }
+                }
+            }
+
             LoginScreen(
-                onLogin = { email ->
-                    activeEmail = email.trim()
-                    activeName = email.substringBefore('@').ifBlank { "Pengguna" }
-                    isAdmin = email.substringBefore('@').equals("admin", ignoreCase = true)
-                    val target = if (isAdmin) AppDestination.AdminHome else AppDestination.UserHome
-                    navController.navigate(target.name) {
-                        popUpTo(AppDestination.Login.name) { inclusive = true }
-                        launchSingleTop = true
-                    }
-                },
-                onRegister = {
-                    navController.navigate(AppDestination.Register.name) {
-                        launchSingleTop = true
-                    }
-                },
+                uiState = uiState,
+                onEmailChange = viewModel::onEmailChange,
+                onPasswordChange = viewModel::onPasswordChange,
+                onTogglePasswordVisibility = viewModel::onTogglePasswordVisibility,
+                onLoginClick = viewModel::onLoginClick,
+                onRegisterClick = viewModel::onRegisterClick,
             )
         }
         composable(AppDestination.Register.name) {
+            val viewModel: RegisterViewModel = viewModel()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+            LaunchedEffect(viewModel) {
+                viewModel.effect.collect { effect ->
+                    when (effect) {
+                        RegisterEffect.NavigateToLogin -> {
+                            if (!navController.popBackStack()) {
+                                navController.navigate(AppDestination.Login.name) {
+                                    launchSingleTop = true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             RegisterScreen(
-                onRegister = {
-                    if (!navController.popBackStack()) {
-                        navController.navigate(AppDestination.Login.name) {
-                            launchSingleTop = true
-                        }
-                    }
-                },
-                onLogin = {
-                    if (!navController.popBackStack()) {
-                        navController.navigate(AppDestination.Login.name) {
-                            launchSingleTop = true
-                        }
-                    }
-                },
+                uiState = uiState,
+                onNameChange = viewModel::onNameChange,
+                onEmailChange = viewModel::onEmailChange,
+                onPasswordChange = viewModel::onPasswordChange,
+                onConfirmPasswordChange = viewModel::onConfirmPasswordChange,
+                onTogglePasswordVisibility = viewModel::onTogglePasswordVisibility,
+                onToggleConfirmPasswordVisibility = viewModel::onToggleConfirmPasswordVisibility,
+                onRegisterClick = viewModel::onRegisterClick,
+                onLoginClick = viewModel::onLoginClick,
             )
         }
         composable(AppDestination.UserHome.name) {
+            val viewModel: UserHomeViewModel = viewModel()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+            LaunchedEffect(Unit) {
+                viewModel.load()
+            }
+            LaunchedEffect(sessionState.activeName) {
+                viewModel.setDisplayName(sessionState.activeName)
+            }
+
             UserHomeScreen(
-                name = activeName,
+                uiState = uiState,
                 navItems = userNav,
                 onNavigate = navigate,
                 onOpenMenu = {
-                    selectedItem = it
+                    sessionViewModel.selectItem(it)
                     navController.navigate(AppDestination.CatalogDetail.name)
                 },
             )
         }
         composable(AppDestination.AdminHome.name) {
+            val viewModel: AdminHomeViewModel = viewModel()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+            LaunchedEffect(Unit) {
+                viewModel.load()
+            }
+            LaunchedEffect(sessionState.activeName) {
+                viewModel.setDisplayName(sessionState.activeName)
+            }
+
             AdminHomeScreen(
-                name = activeName,
+                uiState = uiState,
                 navItems = adminNav,
                 onNavigate = navigate,
             )
         }
         composable(AppDestination.Profile.name) {
+            val viewModel: ProfileViewModel = viewModel()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+            LaunchedEffect(sessionState.activeEmail) {
+                viewModel.load(sessionState.activeEmail)
+            }
+
             ProfileScreen(
-                email = activeEmail,
+                uiState = uiState,
                 onBack = {
                     if (!navController.popBackStack()) {
                         navController.navigate(homeDestination.name) {
@@ -129,6 +202,7 @@ fun AppNavHost(
                     navController.navigate(AppDestination.EditProfile.name)
                 },
                 onLogout = {
+                    sessionViewModel.onLogout()
                     navController.navigate(AppDestination.Login.name) {
                         popUpTo(0) { inclusive = true }
                         launchSingleTop = true
@@ -137,40 +211,73 @@ fun AppNavHost(
             )
         }
         composable(AppDestination.EditProfile.name) {
+            val viewModel: EditProfileViewModel = viewModel()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+            LaunchedEffect(sessionState.activeEmail) {
+                viewModel.load(sessionState.activeEmail)
+            }
+            LaunchedEffect(viewModel) {
+                viewModel.effect.collect { effect ->
+                    when (effect) {
+                        EditProfileEffect.Saved -> {
+                            if (!navController.popBackStack()) {
+                                navController.navigate(AppDestination.Profile.name)
+                            }
+                        }
+                    }
+                }
+            }
+
             EditProfileScreen(
-                email = activeEmail,
+                uiState = uiState,
+                onNameChange = viewModel::onNameChange,
+                onPhoneChange = viewModel::onPhoneChange,
                 onBack = {
                     if (!navController.popBackStack()) {
                         navController.navigate(AppDestination.Profile.name)
                     }
                 },
-                onSave = {
-                    if (!navController.popBackStack()) {
-                        navController.navigate(AppDestination.Profile.name)
-                    }
-                },
+                onSave = viewModel::onSaveClick,
             )
         }
         composable(AppDestination.Catalog.name) {
+            val viewModel: CatalogListViewModel = viewModel()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+            LaunchedEffect(Unit) {
+                viewModel.load()
+            }
+
             CatalogListScreen(
-                isAdmin = isAdmin,
+                uiState = uiState,
+                isAdmin = sessionState.isAdmin,
                 navItems = navItems,
                 selectedDestination = AppDestination.Catalog,
                 onNavigate = navigate,
+                onQueryChange = viewModel::onQueryChange,
+                onCategoryChange = viewModel::onCategoryChange,
                 onOpenMenu = {
-                    selectedItem = it
+                    sessionViewModel.selectItem(it)
                     navController.navigate(AppDestination.CatalogDetail.name)
                 },
                 onAddMenu = {
-                    editing = false
+                    sessionViewModel.setCatalogEditing(false)
                     navController.navigate(AppDestination.CatalogForm.name)
                 },
             )
         }
         composable(AppDestination.CatalogDetail.name) {
+            val viewModel: CatalogDetailViewModel = viewModel()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+            LaunchedEffect(sessionState.selectedItem) {
+                viewModel.load(sessionState.selectedItem)
+            }
+
             CatalogDetailScreen(
-                menuName = selectedItem,
-                isAdmin = isAdmin,
+                uiState = uiState,
+                isAdmin = sessionState.isAdmin,
                 onBack = {
                     if (!navController.popBackStack()) {
                         navController.navigate(AppDestination.Catalog.name)
@@ -180,34 +287,66 @@ fun AppNavHost(
                     navController.navigate(AppDestination.Reviews.name)
                 },
                 onEdit = {
-                    editing = true
+                    sessionViewModel.setCatalogEditing(true)
                     navController.navigate(AppDestination.CatalogForm.name)
                 },
             )
         }
         composable(AppDestination.CatalogForm.name) {
-            val fallbackDestination = if (editing) AppDestination.CatalogDetail else AppDestination.Catalog
+            val viewModel: CatalogFormViewModel = viewModel()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+            LaunchedEffect(sessionState.isEditingCatalog, sessionState.selectedItem) {
+                viewModel.initialize(sessionState.isEditingCatalog, sessionState.selectedItem)
+            }
+
+            val fallbackDestination = if (sessionState.isEditingCatalog) {
+                AppDestination.CatalogDetail
+            } else {
+                AppDestination.Catalog
+            }
+            LaunchedEffect(viewModel) {
+                viewModel.effect.collect { effect ->
+                    when (effect) {
+                        CatalogFormEffect.Saved -> {
+                            if (!navController.popBackStack()) {
+                                navController.navigate(fallbackDestination.name)
+                            }
+                        }
+                    }
+                }
+            }
+
             CatalogFormScreen(
-                isEditing = editing,
+                uiState = uiState,
+                onNameChange = viewModel::onNameChange,
+                onPriceChange = viewModel::onPriceChange,
+                onDescriptionChange = viewModel::onDescriptionChange,
+                onImageSelected = viewModel::onImageSelected,
+                onImageCleared = viewModel::onImageCleared,
+                onImageError = viewModel::onImageError,
                 onBack = {
                     if (!navController.popBackStack()) {
                         navController.navigate(fallbackDestination.name)
                     }
                 },
-                onSave = {
-                    if (!navController.popBackStack()) {
-                        navController.navigate(fallbackDestination.name)
-                    }
-                },
+                onSave = viewModel::onSaveClick,
             )
         }
         composable(AppDestination.Reviews.name) {
+            val viewModel: ReviewListViewModel = viewModel()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+            LaunchedEffect(sessionState.selectedItem) {
+                viewModel.load(sessionState.selectedItem)
+            }
+
             ReviewListScreen(
-                menuName = selectedItem,
+                uiState = uiState,
                 navItems = navItems,
                 selectedDestination = AppDestination.Reviews,
                 onNavigate = navigate,
-                onBack = if (selectedItem.isNotBlank()) {
+                onBack = if (sessionState.selectedItem.isNotBlank()) {
                     {
                         if (!navController.popBackStack()) {
                             navController.navigate(AppDestination.CatalogDetail.name)
@@ -217,18 +356,27 @@ fun AppNavHost(
                     null
                 },
                 onOpenReview = {
-                    selectedItem = it
+                    sessionViewModel.selectItem(it)
                     navController.navigate(AppDestination.ReviewDetail.name)
                 },
                 onWriteReview = {
-                    if (selectedItem.isBlank()) selectedItem = "Nasi ayam sambal matah"
+                    if (sessionState.selectedItem.isBlank()) {
+                        sessionViewModel.selectItem("Nasi ayam sambal matah")
+                    }
                     navController.navigate(AppDestination.ReviewForm.name)
                 },
             )
         }
         composable(AppDestination.ReviewDetail.name) {
+            val viewModel: ReviewDetailViewModel = viewModel()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+            LaunchedEffect(sessionState.selectedItem) {
+                viewModel.load(sessionState.selectedItem)
+            }
+
             ReviewDetailScreen(
-                dish = selectedItem,
+                uiState = uiState,
                 onBack = {
                     if (!navController.popBackStack()) {
                         navController.navigate(AppDestination.Reviews.name)
@@ -240,18 +388,34 @@ fun AppNavHost(
             )
         }
         composable(AppDestination.ReviewForm.name) {
+            val viewModel: ReviewFormViewModel = viewModel()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+            LaunchedEffect(sessionState.selectedItem) {
+                viewModel.setDish(sessionState.selectedItem)
+            }
+            LaunchedEffect(viewModel) {
+                viewModel.effect.collect { effect ->
+                    when (effect) {
+                        ReviewFormEffect.Submitted -> {
+                            if (!navController.popBackStack()) {
+                                navController.navigate(AppDestination.Reviews.name)
+                            }
+                        }
+                    }
+                }
+            }
+
             ReviewFormScreen(
-                dish = selectedItem.ifBlank { "Nasi ayam sambal matah" },
+                uiState = uiState,
+                onRatingChange = viewModel::onRatingChange,
+                onCommentChange = viewModel::onCommentChange,
                 onBack = {
                     if (!navController.popBackStack()) {
                         navController.navigate(AppDestination.Reviews.name)
                     }
                 },
-                onSave = {
-                    if (!navController.popBackStack()) {
-                        navController.navigate(AppDestination.Reviews.name)
-                    }
-                },
+                onSave = viewModel::onSubmitClick,
             )
         }
     }
