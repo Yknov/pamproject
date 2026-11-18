@@ -177,6 +177,7 @@ fun CanteenScaffold(
 private fun navSymbolForDestination(destination: AppDestination): String = when (destination) {
     AppDestination.UserHome, AppDestination.AdminHome -> "⌂"
     AppDestination.Catalog -> "▤"
+    AppDestination.Favorites -> "♡"
     AppDestination.Reviews -> "★"
     AppDestination.Profile -> "●"
     else -> "•"

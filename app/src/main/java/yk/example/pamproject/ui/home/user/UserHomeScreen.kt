@@ -105,6 +105,14 @@ fun UserHomeScreen(
 
             item {
                 ActionRow(
+                    title = "Menu favorit & langganan",
+                    subtitle = "Simpan menu andalan dan pesan kembali lebih cepat",
+                    onClick = { onNavigate(AppDestination.Favorites) },
+                )
+            }
+
+            item {
+                ActionRow(
                     title = "Profil pengguna",
                     subtitle = "Kelola informasi akun CanteenKu",
                     onClick = { onNavigate(AppDestination.Profile) },

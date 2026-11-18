@@ -13,10 +13,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -170,6 +173,8 @@ private fun FoodImagePlaceholder(category: String) {
 fun CatalogDetailScreen(
     menuName: String,
     isAdmin: Boolean,
+    isFavorite: Boolean = false,
+    onToggleFavorite: (() -> Unit)? = null,
     onBack: () -> Unit,
     onReviews: () -> Unit,
     onEdit: () -> Unit,
@@ -180,6 +185,7 @@ fun CatalogDetailScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
@@ -242,10 +248,30 @@ fun CatalogDetailScreen(
                 )
             }
             ActionRow("Lihat semua ulasan", "Ulasan untuk ${menu.name}", onClick = onReviews)
-            Spacer(Modifier.weight(1f))
             if (isAdmin) {
                 PrimaryAction("Edit menu", onEdit)
             } else {
+                if (onToggleFavorite != null) {
+                    OutlinedButton(
+                        onClick = onToggleFavorite,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                    ) {
+                        Text(
+                            text = if (isFavorite) {
+                                "♥ Tersimpan di Favorit · Hapus"
+                            } else {
+                                "♡ Simpan ke Menu Favorit"
+                            },
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                }
                 PrimaryAction("Lihat & tulis ulasan", onReviews)
             }
         }

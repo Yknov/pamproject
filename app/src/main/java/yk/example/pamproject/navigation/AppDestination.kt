@@ -13,4 +13,6 @@ enum class AppDestination {
     Reviews,
     ReviewDetail,
     ReviewForm,
+    Favorites,
+    FavoriteDetail,
 }

@@ -1,10 +1,12 @@
 package yk.example.pamproject.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -14,7 +16,11 @@ import yk.example.pamproject.ui.auth.RegisterScreen
 import yk.example.pamproject.ui.catalog.CatalogDetailScreen
 import yk.example.pamproject.ui.catalog.CatalogFormScreen
 import yk.example.pamproject.ui.catalog.CatalogListScreen
+import yk.example.pamproject.ui.catalog.demoMenus
 import yk.example.pamproject.ui.components.CanteenNavItem
+import yk.example.pamproject.ui.favorites.FavoriteViewModel
+import yk.example.pamproject.ui.favorites.detail.FavoriteDetailScreen
+import yk.example.pamproject.ui.favorites.list.FavoriteScreen
 import yk.example.pamproject.ui.home.admin.AdminHomeScreen
 import yk.example.pamproject.ui.home.user.UserHomeScreen
 import yk.example.pamproject.ui.profile.EditProfileScreen
@@ -33,10 +39,14 @@ fun AppNavHost(
     var selectedItem by rememberSaveable { mutableStateOf("") }
     var editing by rememberSaveable { mutableStateOf(false) }
 
+    val favoriteViewModel: FavoriteViewModel = viewModel()
+    val favoriteUiState by favoriteViewModel.uiState.collectAsState()
+
     val homeDestination = if (isAdmin) AppDestination.AdminHome else AppDestination.UserHome
     val userNav = listOf(
         CanteenNavItem("Beranda", AppDestination.UserHome),
         CanteenNavItem("Menu", AppDestination.Catalog),
+        CanteenNavItem("Favorit", AppDestination.Favorites),
         CanteenNavItem("Ulasan", AppDestination.Reviews),
         CanteenNavItem("Profil", AppDestination.Profile),
     )
@@ -50,6 +60,9 @@ fun AppNavHost(
     val navigate: (AppDestination) -> Unit = { target ->
         if (target == AppDestination.Reviews) {
             selectedItem = ""
+        }
+        if (target == AppDestination.Favorites) {
+            favoriteViewModel.clearMessages()
         }
         navController.navigate(target.name) {
             launchSingleTop = true
@@ -168,9 +181,15 @@ fun AppNavHost(
             )
         }
         composable(AppDestination.CatalogDetail.name) {
+            val activeMenu = demoMenus.firstOrNull { it.name == selectedItem } ?: demoMenus.first()
+            val isFavorite = favoriteUiState.favorites.any {
+                it.menuName.equals(activeMenu.name, ignoreCase = true)
+            }
             CatalogDetailScreen(
                 menuName = selectedItem,
                 isAdmin = isAdmin,
+                isFavorite = isFavorite,
+                onToggleFavorite = { favoriteViewModel.toggleFavorite(activeMenu) },
                 onBack = {
                     if (!navController.popBackStack()) {
                         navController.navigate(AppDestination.Catalog.name)
@@ -252,6 +271,41 @@ fun AppNavHost(
                         navController.navigate(AppDestination.Reviews.name)
                     }
                 },
+            )
+        }
+        composable(AppDestination.Favorites.name) {
+            FavoriteScreen(
+                uiState = favoriteUiState,
+                navItems = navItems,
+                selectedDestination = AppDestination.Favorites,
+                onNavigate = navigate,
+                onSelectCategory = favoriteViewModel::selectCategory,
+                onOpenFavorite = { menuName ->
+                    selectedItem = menuName
+                    favoriteViewModel.clearMessages()
+                    navController.navigate(AppDestination.FavoriteDetail.name)
+                },
+                onRemoveFavorite = favoriteViewModel::removeFavorite,
+            )
+        }
+        composable(AppDestination.FavoriteDetail.name) {
+            val selectedFavorite = favoriteUiState.favorites.firstOrNull {
+                it.menuName.equals(selectedItem, ignoreCase = true)
+            }
+            FavoriteDetailScreen(
+                favorite = selectedFavorite,
+                reorderMessage = favoriteUiState.reorderMessage,
+                onBack = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(AppDestination.Favorites.name)
+                    }
+                },
+                onQuickReorder = {
+                    selectedFavorite?.let {
+                        favoriteViewModel.quickReorder(it.menuName)
+                    }
+                },
+                onRemoveFavorite = favoriteViewModel::removeFavorite,
             )
         }
     }

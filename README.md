@@ -15,6 +15,7 @@ Tabel berikut mencatat pembagian fitur utama yang menjadi tanggung jawab anggota
 |---:|---|---|---|
 | 1 | 245150401111010 | Cantika Putri Permatasari | Modul Katalog Menu Makanan & Upload Gambar |
 | 2 | 245150407111012 | Achmad Hasbil Wafi Rahmawan | Modul Rating & Ulasan Makanan |
+| 3 | 245150400111010 | Dimas Naufal Danusela | Modul Menu Favorit & Langganan |
 
 ## Spesifikasi Project
 
@@ -53,11 +54,13 @@ pamproject/
 │       │   │   │   ├── auth/                      # Data autentikasi
 │       │   │   │   ├── profile/                   # Data profil
 │       │   │   │   ├── catalog/                   # Data katalog/menu
+│       │   │   │   ├── favorites/                 # Data menu favorit & langganan
 │       │   │   │   └── reviews/                   # Data rating/ulasan
 │       │   │   ├── domain/                        # Model dan kontrak bisnis (kerangka)
 │       │   │   │   ├── auth/{model,repository,usecase}/
 │       │   │   │   ├── profile/{model,repository,usecase}/
 │       │   │   │   ├── catalog/{model,repository,usecase}/
+│       │   │   │   ├── favorites/{model,repository,usecase}/
 │       │   │   │   └── reviews/{model,repository,usecase}/
 │       │   │   └── ui/                            # Tampilan dikelompokkan per fitur
 │       │   │       ├── theme/                     # Warna, typography, dan tema Compose
@@ -66,6 +69,7 @@ pamproject/
 │       │   │       ├── profile/                   # Profil dan edit profil
 │       │   │       ├── home/{user,admin}/         # Beranda dan dashboard berdasarkan role
 │       │   │       ├── catalog/{list,detail,form,components}/
+│       │   │       ├── favorites/{list,detail,components}/
 │       │   │       └── reviews/{list,detail,form,components}/
 │       │   └── res/                               # Resource Android
 │       │       ├── drawable/                      # Gambar statis dan drawable
